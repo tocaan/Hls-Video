@@ -9,7 +9,7 @@ class HlsVideoServiceProvider extends ServiceProvider
     public function boot()
     {
         $this->publishes([
-            __DIR__.'/../config/hls-videos.php' => config_path('hls-videos.php'),
+            __DIR__.'/../../config/hls-videos.php' => config_path('hls-videos.php'),
         ], 'config');
 
         // Views
@@ -25,7 +25,7 @@ class HlsVideoServiceProvider extends ServiceProvider
     public function register()
     {
         $this->mergeConfigFrom(
-            __DIR__.'/../config/hls-videos.php', 'hls-videos'
+            __DIR__.'/../../config/hls-videos.php', 'hls-videos'
         );
     }
 }
