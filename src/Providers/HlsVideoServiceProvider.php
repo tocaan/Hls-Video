@@ -1,5 +1,5 @@
 <?php
-namespace Modules\Course\HlsVideo;
+namespace  HlsVideos\Providers;
 
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
