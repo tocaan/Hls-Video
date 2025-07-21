@@ -28,5 +28,10 @@ class HlsVideoServiceProvider extends ServiceProvider
         $this->mergeConfigFrom(
             __DIR__.'/../Config/hls-videos.php', 'hls-videos'
         );
+        
+        $this->mergeConfigFrom(
+            __DIR__ . '/../Config/hls-videos.php',
+            'hls-videos'
+        );
     }
 }
