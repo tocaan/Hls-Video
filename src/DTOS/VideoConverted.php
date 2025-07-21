@@ -1,9 +1,9 @@
 <?php
 
-namespace Tocaan\HlsVideos\DTOS;
+namespace  HlsVideos\DTOS;
 
-use Tocaan\HlsVideos\Models\HlsVideo;
-use Tocaan\HlsVideos\Models\HlsVideoQuality;
+use  HlsVideos\Models\HlsVideo;
+use  HlsVideos\Models\HlsVideoQuality;
 use Illuminate\Support\Facades\Storage;
 
 class VideoConverted

@@ -1,14 +1,14 @@
 <?php
-namespace Tocaan\HlsVideos\Jobs;
+namespace  HlsVideos\Jobs;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Tocaan\HlsVideos\Factories\VideoQualityProcessorFactory;
-use Tocaan\HlsVideos\Models\HlsVideo;
-use Tocaan\HlsVideos\Models\HlsVideoQuality;
+use  HlsVideos\Factories\VideoQualityProcessorFactory;
+use  HlsVideos\Models\HlsVideo;
+use  HlsVideos\Models\HlsVideoQuality;
 
 
 class ConvertQualityJob implements ShouldQueue

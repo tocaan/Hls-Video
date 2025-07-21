@@ -1,10 +1,10 @@
 <?php
 
-namespace Tocaan\HlsVideos\Services\Qualities;
+namespace  HlsVideos\Services\Qualities;
 
-use Tocaan\HlsVideos\DTOS\VideoConverted;
-use Tocaan\HlsVideos\Models\HlsVideoQuality;
-use Tocaan\HlsVideos\Services\Contracts\VideoQualityProcessorInterface;
+use  HlsVideos\DTOS\VideoConverted;
+use  HlsVideos\Models\HlsVideoQuality;
+use  HlsVideos\Services\Contracts\VideoQualityProcessorInterface;
 
 class Mp4ToService implements VideoQualityProcessorInterface
 {

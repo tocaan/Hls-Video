@@ -1,10 +1,10 @@
 <?php
 
-namespace Tocaan\HlsVideos\Models;
+namespace  HlsVideos\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
-use Tocaan\HlsVideos\Services\VideoService;
+use  HlsVideos\Services\VideoService;
 
 class HlsVideo extends Model
 {

@@ -5,13 +5,13 @@
   "license": "MIT",
   "autoload": {
     "psr-4": {
-      "Tocaan\\HlsVideos\\": "src/"
+      "HlsVideos\\": "src/"
     }
   },
   "extra": {
     "laravel": {
       "providers": [
-        "Tocaan\\HlsVideos\\Providers\\HlsVideoServiceProvider"
+        "HlsVideos\\Providers\\HlsVideoServiceProvider"
       ]
     }
   },

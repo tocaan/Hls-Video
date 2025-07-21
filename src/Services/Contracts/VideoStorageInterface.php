@@ -1,8 +1,8 @@
 <?php
 
-namespace Tocaan\HlsVideos\Services\Contracts;
+namespace  HlsVideos\Services\Contracts;
 
-use Tocaan\HlsVideos\Models\HlsVideoQuality;
+use  HlsVideos\Models\HlsVideoQuality;
 
 interface VideoStorageInterface
 {

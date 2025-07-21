@@ -1,9 +1,9 @@
 <?php
 
-namespace Tocaan\HlsVideos\Services\Contracts;
+namespace  HlsVideos\Services\Contracts;
 
-use Tocaan\HlsVideos\DTOS\VideoConverted;
-use Tocaan\HlsVideos\Models\HlsVideoQuality;
+use  HlsVideos\DTOS\VideoConverted;
+use  HlsVideos\Models\HlsVideoQuality;
 
 interface VideoQualityProcessorInterface
 {

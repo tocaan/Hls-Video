@@ -1,7 +1,7 @@
 <?php
 
-use Tocaan\HlsVideos\Services\Qualities\Mp4ToService;
-use Tocaan\HlsVideos\Services\Storages\R2StorageService;
+use  HlsVideos\Services\Qualities\Mp4ToService;
+use  HlsVideos\Services\Storages\R2StorageService;
 
 return [
     'access_route_stream' => 'dashboard.video.stream',

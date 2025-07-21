@@ -1,9 +1,9 @@
 <?php
 
-namespace Tocaan\HlsVideos\Services\Storages;
+namespace  HlsVideos\Services\Storages;
 
-use Tocaan\HlsVideos\Models\HlsVideoQuality;
-use Tocaan\HlsVideos\Services\Contracts\VideoStorageInterface;
+use  HlsVideos\Models\HlsVideoQuality;
+use  HlsVideos\Services\Contracts\VideoStorageInterface;
 use Illuminate\Support\Facades\Storage;
 
 class R2StorageService implements VideoStorageInterface

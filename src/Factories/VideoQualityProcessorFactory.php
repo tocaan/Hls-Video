@@ -1,8 +1,8 @@
 <?php
 
-namespace Tocaan\HlsVideos\Factories;
+namespace  HlsVideos\Factories;
 
-use Tocaan\HlsVideos\Services\Contracts\VideoQualityProcessorInterface;
+use  HlsVideos\Services\Contracts\VideoQualityProcessorInterface;
 
 class VideoQualityProcessorFactory
 {

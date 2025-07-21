@@ -1,6 +1,6 @@
 <?php
 
-namespace Tocaan\HlsVideos\Services;
+namespace  HlsVideos\Services;
 
 class AssetManagerService
 {

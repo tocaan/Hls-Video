@@ -1,9 +1,9 @@
 <?php
 
-namespace Tocaan\HlsVideos\Models;
+namespace  HlsVideos\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Tocaan\HlsVideos\Jobs\ConvertQualityJob;
+use  HlsVideos\Jobs\ConvertQualityJob;
 use Illuminate\Support\Facades\Storage;
 
 class HlsVideoQuality extends Model

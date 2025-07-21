@@ -1,8 +1,8 @@
 <?php
 
-namespace Tocaan\HlsVideos\Services;
+namespace  HlsVideos\Services;
 
-use Tocaan\HlsVideos\Models\HlsVideo;
+use  HlsVideos\Models\HlsVideo;
 use FFMpeg;
 use Pion\Laravel\ChunkUpload\Handler\HandlerFactory;
 use Pion\Laravel\ChunkUpload\Receiver\FileReceiver;
