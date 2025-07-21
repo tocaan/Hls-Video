@@ -6,22 +6,27 @@ use Illuminate\Support\ServiceProvider;
 
 class HlsVideoServiceProvider extends ServiceProvider
 {
-    public function boot(): void
+    public function boot()
     {
-        Blade::directive('hlsVideoStyles', function () {
-            return "<?php echo \\Modules\\Course\\HlsVideo\\Src\\Services\\AssetManagerService::outputStyles(); ?>";
-        });
+        // Config
+        $this->publishes([
+            __DIR__.'/../../Config/hls-videos.php' => config_path('hls-videos.php'),
+        ], 'config');
 
-        Blade::directive('hlsVideoScripts', function () {
-            return "<?php echo \\Modules\\Course\\HlsVideo\\Src\\Services\\AssetManagerService::outputScripts(); ?>";
-        });
+        // Views
+        $this->loadViewsFrom(__DIR__.'/../../Resources/views', 'hls-videos');
 
-        // If you publish assets
-        // $this->publishes([...]);
+        // Routes
+        $this->loadRoutesFrom(__DIR__.'/../../Routes/web.php');
+
+        // Migrations
+        $this->loadMigrationsFrom(__DIR__.'/../../Database/migrations');
     }
 
-    public function register(): void
+    public function register()
     {
-        // if you want to merge config or bind things
+        $this->mergeConfigFrom(
+            __DIR__.'/../../Config/hls-videos.php', 'hls-videos'
+        );
     }
 }
