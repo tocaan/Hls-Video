@@ -69,6 +69,23 @@ class VideoConverted
             $content
          );
 
+         // Replace .ts file references with the custom route
+         // This regex matches lines ending with .ts (optionally preceded by whitespace)
+         $newContent = preg_replace_callback(
+            '/^([^\r\n]*?)([a-zA-Z0-9_\-]+\.m3u8)$/m',
+            function ($matches) {
+                  $fileName = $matches[2];
+                  // If you have access to the route() helper, use it. Otherwise, build the URL manually:
+                  $url = route(config('hls-videos.access_route_stream'), [
+                  $this->videoQuality->hls_video_id, 
+                  $this->videoQuality->quality, 
+                  $fileName
+               ]);
+                  return $matches[1] . $url;
+            },
+            $content
+         );
+
          // Write the modified content back to the file (overwrite)
          file_put_contents($playlistIndexFile, $newContent);
 
