@@ -13,12 +13,15 @@ class VideoService
 {
     public function createThumb(HlsVideo $video){
 
-        FFMpeg::fromDisk(config('hls-videos.temp_disk'))
+        if(config('hls-videos.take_thumbnail')){
+
+            FFMpeg::fromDisk(config('hls-videos.temp_disk'))
             ->open($video->temp_video_path)
             ->getFrameFromSeconds(3)
             ->export()
             ->toDisk(config('hls-videos.thumb_disk'))
             ->save("$video->id/thumb.jpg");
+        }
     }
 
     static function findById($id)
