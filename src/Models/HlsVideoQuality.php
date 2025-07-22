@@ -10,7 +10,7 @@ class HlsVideoQuality extends Model
 {
     const CONVERTING = 'converting';
     const UPLOADING = 'uploading';
-    const READY = 'uploading';
+    const READY = 'ready';
 
     protected $guarded = ['id'];
     protected $casts = [

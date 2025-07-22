@@ -32,13 +32,17 @@ class ConvertQualityJob implements ShouldQueue
 
             $service = VideoQualityProcessorFactory::make($quality);
 
-            if($this->hlsVideoQuality->status == HlsVideoQuality::UPLOADING){
-                new VideoConverted($this->hlsVideoQuality);
-            }else{
-                $this->hlsVideoQuality->updateStatusTo(HlsVideoQuality::CONVERTING);
-                $service->convertVideo($video->temp_video,$this->hlsVideoQuality);
+            switch($this->hlsVideoQuality->status){
+                case HlsVideoQuality::UPLOADING:
+                    new VideoConverted($this->hlsVideoQuality);
+                    break;
+                case HlsVideoQuality::READY:
+                    break;
+                default:
+                    $this->hlsVideoQuality->updateStatusTo(HlsVideoQuality::CONVERTING);
+                    $service->convertVideo($video->temp_video,$this->hlsVideoQuality);
+                    break;
             }
-            
         } catch (\Throwable $e) {
             \Log::error("FAILED ConvertQualityJob: {$e->getMessage()}");
             throw $e;
