@@ -58,6 +58,8 @@ class VideoConverted
             '/^([^\r\n]*?)([a-zA-Z0-9_\-]+\.ts)$/m',
             function ($matches) {
                   $fileName = $matches[2];
+                  $fileName = explode('/',$fileName);
+                  $fileName = $fileName[count[$fileName] - 1];
                   // If you have access to the route() helper, use it. Otherwise, build the URL manually:
                   $url = route(config('hls-videos.access_route_stream'), [
                   $this->videoQuality->hls_video_id, 
@@ -73,7 +75,8 @@ class VideoConverted
          file_put_contents($playlistIndexFile, $newContent);
 
        } catch (\Exception $e) {
-           // Handle error as needed
+         \Log::error("FAILED ConvertQualityJob: {$e->getMessage()}");
+         throw $e;
        }
    }
 
@@ -124,7 +127,8 @@ class VideoConverted
          file_put_contents($masterPath, $masterPlaylist);
 
        } catch (\Exception $e) {
-           // Handle error as needed
+         \Log::error("FAILED ConvertQualityJob: {$e->getMessage()}");
+         throw $e;
        }
    }
 }
