@@ -33,8 +33,12 @@ class FfmpegService implements VideoQualityProcessorInterface
         ->addFormat($format, function($media) use ($width, $height) {
             $media->scale($width, $height);
         })
+        ->useSegmentFilenameGenerator(function ($name, $format, $key, callable $segments, callable $playlist) {
+            $segments("{$name}-{$format->getKiloBitrate()}-{$key}-%03d.ts");
+            $playlist("vd.m3u8");
+        })
         ->toDisk(config('hls-videos.temp_disk')) // Output disk (can be S3, local, etc.)
-        ->save("{$this->video->id}/{$this->quality->quality}/vd.m3u8");
+        ->save("{$this->video->id}/{$this->quality->quality}/index.m3u8");
         
         $quality->update([
             'convert_data' => compact('width','height','videoKbps','bandwidth')

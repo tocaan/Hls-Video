@@ -92,17 +92,31 @@ class VideoConverted
          $masterPlaylist .= "#EXT-X-VERSION:3\n";
 
          foreach ($this->video->qualities as $quality) {
+            $qualityIndexPlaylistPath = "{$this->hls_video_id}/{$this->quality}/index.m3u8";
+            if(Storage::disk(config('hls-videos.temp_disk'))->exists($qualityIndexPlaylistPath)){
+               $fileContents = Storage::disk(config('hls-videos.temp_disk'))->get($qualityIndexPlaylistPath);
+               // Extract the first #EXT-X-STREAM-INF line if available
+               $lines = explode("\n", $fileContents);
+               $streamInfLine = null;
+               foreach ($lines as $line) {
+                  if (str_starts_with($line, '#EXT-X-STREAM-INF')) {
+                     $streamInfLine = $line;
+                     break;
+                  }
+               }
+               $masterPlaylist .= "$streamInfLine\n";
+            }else{
 
-            $convertData = $quality->convert_data;
-            // Set defaults if not provided
-            $bandwidth = isset($convertData['bandwidth']) ? $convertData['bandwidth'] : 1000000;
-            $resolution = isset($convertData['width']) ? $convertData['width'] : '1280';
-            $resolution .= isset($convertData['height']) ? "x{$convertData['height']}" : 'x720';
-            
+               $convertData = $quality->convert_data;
+               // Set defaults if not provided
+               $bandwidth = isset($convertData['bandwidth']) ? $convertData['bandwidth'] : 1000000;
+               $resolution = isset($convertData['width']) ? $convertData['width'] : '1280';
+               $resolution .= isset($convertData['height']) ? "x{$convertData['height']}" : 'x720';
+               $masterPlaylist .= "#EXT-X-STREAM-INF:BANDWIDTH={$bandwidth},RESOLUTION={$resolution}\n";
+            }
+
             $q = $quality->quality;
-
             $pathToFile = route(config('hls-videos.access_route_stream'), [$this->video->id, $q, 'vd.m3u8']);
-            $masterPlaylist .= "#EXT-X-STREAM-INF:BANDWIDTH={$bandwidth},RESOLUTION={$resolution}\n";
             $masterPlaylist .= "$pathToFile\n";
          }
 
