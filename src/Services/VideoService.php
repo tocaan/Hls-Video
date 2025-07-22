@@ -26,7 +26,7 @@ class VideoService
         return HlsVideo::find($id);
     }
 
-    public function receiveVideo($request)
+    public function receiveVideo($request,$model = null)
     {
         $receiver = new FileReceiver('file', $request, HandlerFactory::classFromRequest($request));
         
@@ -37,26 +37,9 @@ class VideoService
         $fileReceived = $receiver->receive(); // receive file
         
         if ($fileReceived->isFinished()) { // file uploading is complete / all chunks are uploaded
-            $videoId = $this->createUniqueVideoUuid();
-             // File uploading is complete
             $file = $fileReceived->getFile(); // Get file
 
-            // Store the uploaded file
-            $extension = $file->getClientOriginalExtension();
-            $fileName = "vd.$extension";
-
-            $disk = Storage::disk(config('hls-videos.temp_disk'));
-            $disk->putFileAs($videoId, $file, $fileName);
-
-            // Delete chunked file
-            unlink($file->getPathname());
-
-            $video = HlsVideo::create([
-                'id' => $videoId,
-                'file_name' => $fileName,
-                'original_extension' => $extension,
-                'original_file_name' => $file->getClientOriginalName()
-            ]);
+            $video = $this->handlingUploadedFile($file, $model);
             
             return [
                 "status" => true,
@@ -71,6 +54,34 @@ class VideoService
             'done' => $handler->getPercentageDone(),
             'status' => true
         ];
+    }
+
+    public function handlingUploadedFile($file,$model = null,$extension = null,$originalFileName = null, $deleteChunked = true) {
+       
+        // Store the uploaded file
+        $extension = $extension ?? $file->getClientOriginalExtension();
+        $fileName = "vd.$extension";
+
+        $disk = Storage::disk(config('hls-videos.temp_disk'));
+
+        $videoId = $this->createUniqueVideoUuid();
+        $disk->putFileAs($videoId, $file, $fileName);
+
+        if($deleteChunked){
+            // Delete chunked file
+            unlink($file->getPathname());
+        }
+
+        $video = HlsVideo::create([
+            'id' => $videoId,
+            'file_name' => $fileName,
+            'original_extension' => $extension,
+            'original_file_name' => $originalFileName ?? $file->getClientOriginalName()
+        ]);
+
+        if($model) $model->hlsVideos()->attach([$video->id]);
+
+        return $video;
     }
 
     private function createUniqueVideoUuid() : string {
