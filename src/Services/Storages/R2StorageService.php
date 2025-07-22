@@ -14,16 +14,6 @@ class R2StorageService implements VideoStorageInterface
             $r2Disk = Storage::disk($storageConfig['disk_name']);
             $pathToTempQualityFolder = "$quality->hls_video_id/$quality->quality";
 
-            // Create directories
-            if (!is_dir($r2Disk->path($quality->hls_video_id))) {
-                mkdir($r2Disk->path($quality->hls_video_id), 0755, true);
-            }
-            
-            // Create directories
-            if (!is_dir($r2Disk->path($pathToTempQualityFolder))) {
-                mkdir($r2Disk->path($pathToTempQualityFolder), 0755, true);
-            }
-
             // Get all files recursively from the local disk
             $tempDisk = Storage::disk(config('hls-videos.temp_disk'));
             $allFiles = $tempDisk->allFiles($pathToTempQualityFolder);
