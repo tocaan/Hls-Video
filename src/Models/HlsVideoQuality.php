@@ -13,6 +13,9 @@ class HlsVideoQuality extends Model
     const READY = 'uploading';
 
     protected $guarded = ['id'];
+    protected $casts = [
+        'convert_data' => 'array'
+    ];
 
     protected static function boot()
     {

@@ -19,6 +19,7 @@ class FfmpegService implements VideoQualityProcessorInterface
         $this->video = $quality->video;
         $this->quality = $quality;
         [$width, $height, $videoKbps] = $this->getQualitySettings($this->quality->quality);
+        $bandwidth = $videoKbps * 1024;
 
         FFMpeg::fromDisk(config('hls-videos.temp_disk'))
         ->open($this->video->temp_video_path)
@@ -33,6 +34,13 @@ class FfmpegService implements VideoQualityProcessorInterface
         )
         ->toDisk(config('hls-videos.temp_disk')) // Output disk (can be S3, local, etc.)
         ->save("{$this->video->id}/{$this->quality->quality}/vd.m3u8");
+        $quality->update([
+            'convert_data' => compact('width','height','videoKbps','bandwidth')
+        ]);
+
+        $quality->refresh();
+        
+        return new VideoConverted($quality);
     }
 
 

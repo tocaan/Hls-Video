@@ -88,22 +88,26 @@ class VideoConverted
    private function createOrUpdateMasterPlaylist()
    {
        try {
-           $masterPlaylist = "#EXTM3U\n";
-           $masterPlaylist .= "#EXT-X-VERSION:3\n";
+         $masterPlaylist = "#EXTM3U\n";
+         $masterPlaylist .= "#EXT-X-VERSION:3\n";
 
-           foreach ($this->video->qualities as $quality) {
-               // Set defaults if not provided
-               $bandwidth = isset($quality->bandwidth) ? $quality->bandwidth : 1000000;
-               $resolution = isset($quality->resolution) ? $quality->resolution : '1280x720';
-               $q = $quality->quality;
+         foreach ($this->video->qualities as $quality) {
 
-               $pathToFile = route(config('hls-videos.access_route_stream'), [$this->video->id, $q, 'vd.m3u8']);
-               $masterPlaylist .= "#EXT-X-STREAM-INF:BANDWIDTH={$bandwidth},RESOLUTION={$resolution}\n";
-               $masterPlaylist .= "$pathToFile\n";
-           }
+            $convertData = $quality->convert_data;
+            // Set defaults if not provided
+            $bandwidth = isset($convertData['bandwidth']) ? $convertData['bandwidth'] : 1000000;
+            $resolution = isset($convertData['width']) ? $convertData['width'] : '1280';
+            $resolution .= isset($convertData['height']) ? "x{$convertData['height']}" : 'x720';
+            
+            $q = $quality->quality;
 
-           $masterPath = $this->video->temp_video_folder . '/index.m3u8';
-           file_put_contents($masterPath, $masterPlaylist);
+            $pathToFile = route(config('hls-videos.access_route_stream'), [$this->video->id, $q, 'vd.m3u8']);
+            $masterPlaylist .= "#EXT-X-STREAM-INF:BANDWIDTH={$bandwidth},RESOLUTION={$resolution}\n";
+            $masterPlaylist .= "$pathToFile\n";
+         }
+
+         $masterPath = $this->video->temp_video_folder . '/index.m3u8';
+         file_put_contents($masterPath, $masterPlaylist);
 
        } catch (\Exception $e) {
            // Handle error as needed
