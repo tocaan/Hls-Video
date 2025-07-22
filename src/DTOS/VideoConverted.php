@@ -59,7 +59,7 @@ class VideoConverted
             function ($matches) {
                   $fileName = $matches[2];
                   $fileName = explode('/',$fileName);
-                  $fileName = $fileName[count[$fileName] - 1];
+                  $fileName = $fileName[count($fileName) - 1];
                   // If you have access to the route() helper, use it. Otherwise, build the URL manually:
                   $url = route(config('hls-videos.access_route_stream'), [
                   $this->videoQuality->hls_video_id, 
