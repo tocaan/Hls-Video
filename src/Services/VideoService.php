@@ -29,6 +29,11 @@ class VideoService
         return HlsVideo::find($id);
     }
 
+    static function deleteVideo($id)
+    {
+        return HlsVideo::find($id)->delete();
+    }
+
     public function receiveVideo($request,$model = null)
     {
         $receiver = new FileReceiver('file', $request, HandlerFactory::classFromRequest($request));
@@ -146,14 +151,30 @@ class VideoService
         //     'original_steam_quality' => $quality,
         //     'stream_data' => $videoStream,
         // ]);
+        $upcommingQuality = self::getUpcommingQuality($video);
 
+        if($upcommingQuality)
+            self::createQualityFromConfig($video,$upcommingQuality);
+    }
+
+    static function getUpcommingQuality($video)
+    {
         foreach(config('hls-videos.qualities') as $configQuality){
 
-            $video->qualities()->create([
-                'quality' => $configQuality['quality'],
-                'convert_service' => $configQuality['convert_service'],
-            ]);
+            if(!$video->qualities()->where('quality',$configQuality['quality'])->exists()){
+                return $configQuality;
+            }
         }
+
+        return false;
+    }
+
+    static function createQualityFromConfig($video,$configQuality)
+    {
+        $video->qualities()->create([
+            'quality' => $configQuality['quality'],
+            'convert_service' => $configQuality['convert_service'],
+        ]);
     }
 
     public function getVideoInfo($video)

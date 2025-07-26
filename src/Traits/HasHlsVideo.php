@@ -2,16 +2,23 @@
 namespace  HlsVideos\Traits;
 
 use HlsVideos\Models\HlsVideo;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
+use Illuminate\Database\Eloquent\Relations\MorphToMany;
 
 trait HasHlsVideo
 {
-    public function hlsVideos()
+    public function hlsVideos(): MorphToMany
     {
         return $this->morphToMany(HlsVideo::class, 'videoable','hls_videoables','videoable_id','hls_video_id');
     }
 
     public function hlsVideo()
     {
-        return $this->morphOne(HlsVideo::class,'videoable','hls_videoables','videoable_id','hls_video_id');
+        return $this->hlsVideos()->limit(1);
+    }
+
+    public function getHlsVideo()
+    {
+        return $this->hlsVideos()->first();
     }
 }

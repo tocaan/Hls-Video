@@ -9,12 +9,12 @@ class VideoManeger extends Component
 
     public function __construct(public $model)
     {
-        $this->video = $model->hlsVideo;
+        $this->video = $model->getHlsVideo();
     }
 
     public function render()
     {
         return view('hls-videos::components.hls-video-maneger');
     }
-    
+
 }

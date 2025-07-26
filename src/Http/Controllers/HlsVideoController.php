@@ -2,6 +2,7 @@
 namespace  HlsVideos\Http\Controllers;
 
 use HlsVideos\Http\Requests\UploadVideoRequest;
+use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use HlsVideos\Services\VideoService;
 
@@ -13,7 +14,7 @@ class HlsVideoController extends Controller
         //
         
     }
-    
+
     public function uploadVideo(UploadVideoRequest $request)
     {
         try {
@@ -36,10 +37,15 @@ class HlsVideoController extends Controller
         }
     }
 
+    public function list(Request $request)
+    {
+        
+    }
+
     public function getOptions($id = null)
     {
         $video = $id ? VideoService::findById($id) : null;
-
+        
         return response()->json([
             'html' => view("hls-videos::components.video-options", compact('video'))->render(),
             'build_uploader' => !$video,
@@ -47,5 +53,15 @@ class HlsVideoController extends Controller
             'video_source' =>$video?->is_ready ? route(config('hls-videos.access_route_stream'),[$video->id]) : '',
             'video_id' => $video?->id
         ]);
+    }
+
+    public function deleteVideo(Request $request,$id)
+    {
+        try {
+            VideoService::deleteVideo($id);
+            return $this->getOptions();
+        } catch (\PDOException $e) {
+            return Response()->json([false, $e->errorInfo[2]],500);
+        } 
     }
 }

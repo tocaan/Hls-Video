@@ -2,9 +2,12 @@
 
 namespace  HlsVideos\DTOS;
 
+use HlsVideos\Events\VideoConvertedEvent;
 use  HlsVideos\Models\HlsVideo;
 use  HlsVideos\Models\HlsVideoQuality;
+use HlsVideos\Services\VideoService;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Event;
 
 class VideoConverted
 {
@@ -35,10 +38,18 @@ class VideoConverted
    private function updateVideoUploaded()
    {
       $this->video->update(['status' => HlsVideo::READY]);
+      $upcommingQuality = VideoService::getUpcommingQuality($this->video);
 
-      if(!$this->video->qualities()->notReady()->count()){
+      if($upcommingQuality){
 
-        Storage::disk(config('hls-videos.temp_disk'))->deleteDirectory($this->video->id);
+         VideoService::createQualityFromConfig($this->video,$upcommingQuality);
+      }else{
+
+         if(!$this->video->qualities()->notReady()->count()){
+
+            Storage::disk(config('hls-videos.temp_disk'))->deleteDirectory($this->video->id);
+            Event::dispatch(new VideoConvertedEvent($this->video));
+          }
       }
    }
 
