@@ -218,6 +218,5 @@ class VideoService
             $path,
             now()->addMinutes(5) // signed URL valid for 15 minutes
         );
-
     }
 }

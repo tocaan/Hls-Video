@@ -87,4 +87,9 @@ class HlsVideo extends Model
 
         return $this->status == self::READY;
     }
+
+    public function getVideoLinkAttribute(){
+
+        return route(config('hls-videos.access_route_stream'),[$this->id]);
+    }
 }
