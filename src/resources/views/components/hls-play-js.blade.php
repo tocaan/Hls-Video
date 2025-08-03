@@ -179,7 +179,7 @@
             ;
             
             content.innerHTML = video;
-            
+
             videoPlayerIoRun(videoId,src);
 
             loader.style.display = 'none';
@@ -200,4 +200,3 @@
             const player = new Plyr(video);
         }
     </script>
-@endpush
