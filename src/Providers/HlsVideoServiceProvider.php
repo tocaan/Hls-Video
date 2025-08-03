@@ -1,7 +1,7 @@
 <?php
 namespace  HlsVideos\Providers;
 
-use HlsVideos\Components\VideoManeger;
+use HlsVideos\Components\{VideoManeger, HlsPlayer, HlsPlayerScript};
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
 
@@ -24,6 +24,8 @@ class HlsVideoServiceProvider extends ServiceProvider
         
         // Register blade component
         Blade::component('hls-video-manager', VideoManeger::class);
+        Blade::component('hls-play', HlsPlayer::class);
+        Blade::component('hls-play-js', HlsPlayerScript::class);
     }
 
     public function register()
