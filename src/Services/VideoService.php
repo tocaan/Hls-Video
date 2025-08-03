@@ -34,6 +34,13 @@ class VideoService
         return HlsVideo::find($id)->delete();
     }
 
+    static function startingConvertQuality($quality)
+    {
+        foreach(config('hls-videos.storages') as $disk => $config){
+            Storage::disk($disk)->deleteDirectory($quality->folder_path);
+        }
+    }
+
     public function receiveVideo($request,$model = null)
     {
         $receiver = new FileReceiver('file', $request, HandlerFactory::classFromRequest($request));

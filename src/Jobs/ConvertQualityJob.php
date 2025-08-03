@@ -2,6 +2,7 @@
 namespace  HlsVideos\Jobs;
 
 use HlsVideos\DTOS\VideoConverted;
+use HlsVideos\Services\VideoService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -26,6 +27,7 @@ class ConvertQualityJob implements ShouldQueue
         try {
             $quality = $this->hlsVideoQuality->quality;
             $video = $this->hlsVideoQuality->video;
+            $videoService = new VideoService();
 
             if($video->status != HlsVideo::READY)
                 $video->update(['status' => HlsVideo::PROCESSING]);
@@ -40,6 +42,7 @@ class ConvertQualityJob implements ShouldQueue
                     break;
                 default:
                     $this->hlsVideoQuality->updateStatusTo(HlsVideoQuality::CONVERTING);
+                    $videoService->startingConvertQuality($this->hlsVideoQuality);
                     $service->convertVideo($video->temp_video,$this->hlsVideoQuality);
                     break;
             }

@@ -42,6 +42,11 @@ class HlsVideoQuality extends Model
         return Storage::disk(config('hls-videos.temp_disk'))->path("{$this->hls_video_id}/{$this->quality}");
     }
 
+    public function getFolderPathAttribute(){
+
+        return "{$this->hls_video_id}/{$this->quality}";
+    }
+
     public function scopeNotReady($q){
 
         return $q->where('status', '!=', self::READY);
