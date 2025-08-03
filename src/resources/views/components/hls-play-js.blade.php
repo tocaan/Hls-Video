@@ -198,5 +198,6 @@
             }
 
             const player = new Plyr(video);
+            player.play();
         }
     </script>
