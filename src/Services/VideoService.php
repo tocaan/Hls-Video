@@ -215,7 +215,7 @@ class VideoService
             $path .= "/index.m3u8";
         
         if (!Storage::disk(config('hls-videos.stream_disk'))->exists($path)) {
-            abort(404);
+            return false;
         }
     
         // Optional: auth check
