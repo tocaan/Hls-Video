@@ -1,8 +1,8 @@
 <?php
 
-namespace  HlsVideos\Services;
+namespace HlsVideos\Services;
 
-use  HlsVideos\Models\HlsVideo;
+use HlsVideos\Models\HlsVideo;
 use FFMpeg;
 use Pion\Laravel\ChunkUpload\Handler\HandlerFactory;
 use Pion\Laravel\ChunkUpload\Receiver\FileReceiver;
@@ -11,16 +11,17 @@ use Illuminate\Support\Facades\Storage;
 
 class VideoService
 {
-    public function createThumb(HlsVideo $video){
+    public function createThumb(HlsVideo $video)
+    {
 
-        if(config('hls-videos.take_thumbnail')){
+        if (config('hls-videos.take_thumbnail')) {
 
             FFMpeg::fromDisk(config('hls-videos.temp_disk'))
-            ->open($video->temp_video_path)
-            ->getFrameFromSeconds(3)
-            ->export()
-            ->toDisk(config('hls-videos.thumb_disk'))
-            ->save("$video->id/thumb.jpg");
+                ->open($video->temp_video_path)
+                ->getFrameFromSeconds(3)
+                ->export()
+                ->toDisk(config('hls-videos.thumb_disk'))
+                ->save("$video->id/thumb.jpg");
         }
     }
 
@@ -36,26 +37,26 @@ class VideoService
 
     static function startingConvertQuality($quality)
     {
-        foreach(config('hls-videos.storages') as $disk => $config){
+        foreach (config('hls-videos.storages') as $disk => $config) {
             Storage::disk($disk)->deleteDirectory($quality->folder_path);
         }
     }
 
-    public function receiveVideo($request,$model = null)
+    public function receiveVideo($request, $model = null)
     {
         $receiver = new FileReceiver('file', $request, HandlerFactory::classFromRequest($request));
-        
-        if (!$receiver->isUploaded()) {
+
+        if (! $receiver->isUploaded()) {
             // file not uploaded
         }
 
         $fileReceived = $receiver->receive(); // receive file
-        
+
         if ($fileReceived->isFinished()) { // file uploading is complete / all chunks are uploaded
             $file = $fileReceived->getFile(); // Get file
 
             $video = $this->handlingUploadedFile($file, $model);
-            
+
             return [
                 "status" => true,
                 "message" => "File uploaded successfully",
@@ -71,8 +72,9 @@ class VideoService
         ];
     }
 
-    public function handlingUploadedFile($file,$model = null,$extension = null,$originalFileName = null, $deleteChunked = true) {
-       
+    public function handlingUploadedFile($file, $model = null, $extension = null, $originalFileName = null, $deleteChunked = true)
+    {
+
         // Store the uploaded file
         $extension = $extension ?? $file->getClientOriginalExtension();
         $fileName = "vd.$extension";
@@ -82,7 +84,7 @@ class VideoService
         $videoId = $this->createUniqueVideoUuid();
         $disk->putFileAs($videoId, $file, $fileName);
 
-        if($deleteChunked){
+        if ($deleteChunked) {
             // Delete chunked file
             unlink($file->getPathname());
         }
@@ -94,19 +96,21 @@ class VideoService
             'original_file_name' => $originalFileName ?? $file->getClientOriginalName()
         ]);
 
-        if($model) $model->hlsVideos()->attach([$video->id]);
+        if ($model)
+            $model->hlsVideos()->attach([$video->id]);
 
         return $video;
     }
 
-    private function createUniqueVideoUuid() : string {
+    private function createUniqueVideoUuid(): string
+    {
         $uuid = (string) \Illuminate\Support\Str::uuid();
-        if(HlsVideo::find($uuid))
+        if (HlsVideo::find($uuid))
             return $this->createUniqueVideoUuid();
         else
             return $uuid;
     }
-    
+
 
     public function handlingTheQualityPlaylist($q, $videoId, $playlistIndexFile)
     {
@@ -125,7 +129,7 @@ class VideoService
                     $fileName = $matches[2];
                     // If you have access to the route() helper, use it. Otherwise, build the URL manually:
                     $url = route(config('hls-videos.access_route_stream'), [$videoId, $q, $fileName]);
-                    return $matches[1] . $url;
+                    return $matches[1].$url;
                 },
                 $content
             );
@@ -160,15 +164,15 @@ class VideoService
         // ]);
         $upcommingQuality = self::getUpcommingQuality($video);
 
-        if($upcommingQuality)
-            self::createQualityFromConfig($video,$upcommingQuality);
+        if ($upcommingQuality)
+            self::createQualityFromConfig($video, $upcommingQuality);
     }
 
     static function getUpcommingQuality($video)
     {
-        foreach(config('hls-videos.qualities') as $configQuality){
+        foreach (config('hls-videos.qualities') as $configQuality) {
 
-            if(!$video->qualities()->where('quality',$configQuality['quality'])->exists()){
+            if (! $video->qualities()->where('quality', $configQuality['quality'])->exists()) {
                 return $configQuality;
             }
         }
@@ -176,7 +180,7 @@ class VideoService
         return false;
     }
 
-    static function createQualityFromConfig($video,$configQuality)
+    static function createQualityFromConfig($video, $configQuality)
     {
         $video->qualities()->create([
             'quality' => $configQuality['quality'],
@@ -188,7 +192,7 @@ class VideoService
     {
         $video = FFMpeg::fromDisk(config('hls-videos.temp_disk'))
             ->open($video->temp_video_path);
-       
+
         $duration = $video->getDuration(); // Duration in seconds
         $frame = $video->getFrame(0); // Get a frame (e.g., the first frame)
         $dimension = $frame->getDimensions(); // Get the dimension
@@ -200,30 +204,66 @@ class VideoService
         ];
     }
 
-    static function getStreamTemporaryLink($videoId,$quality = null, $file = null)
+    static function getStreamTemporaryLink($videoId, $quality = null, $file = null)
     {
         $video = HlsVideo::ready()->findOrFail($videoId);
 
         $path = $video->id;
-        
-        if($quality)
+
+        if ($quality)
             $path .= "/$quality";
 
-        if($file)
+        if ($file)
             $path .= "/$file";
         else
             $path .= "/index.m3u8";
-        
-        if (!Storage::disk(config('hls-videos.stream_disk'))->exists($path)) {
+
+        if (! Storage::disk(config('hls-videos.stream_disk'))->exists($path)) {
             return false;
         }
-    
+
         // Optional: auth check
         // if (auth()->user()->cannot('view-video', $id)) abort(403);
-    
+
         return Storage::disk(config('hls-videos.stream_disk'))->temporaryUrl(
             $path,
             now()->addMinutes(5) // signed URL valid for 15 minutes
         );
+    }
+
+    static function downloadVideoLocale($localPath, $video)
+    {
+        $firstQ = $video->qualities()->oldest()->first();
+        $path = "$video->id/$firstQ->quality/vd.m3u8";
+
+        $content = Storage::disk(config('hls-videos.stream_disk'))->get($path);
+        $oldTsFilesUrl = route(config('hls-videos.access_route_stream'), [$video->id, $firstQ->quality]);
+        $newTsFilesUrl = $localPath;
+        $content = str_replace($oldTsFilesUrl, $newTsFilesUrl, $content);
+        $tsFiles = self::getTsFilesFromPlaylistFile($content);
+        $tsFilesUrls = [];
+
+        foreach ($tsFiles as $file) {
+            $tsFilesUrls[] = [
+                'file_name' => $file,
+                "donwload_url" => route(config('hls-videos.download_route_ts_files'), [
+                    $video->id, $firstQ->quality, $file
+                ])
+            ];
+        }
+
+        return [
+            "playlist" => [
+                "file_name" => "index.m3u8",
+                "file_content" => $content
+            ],
+            "ts_files" => $tsFilesUrls
+        ];
+    }
+
+    static function getTsFilesFromPlaylistFile($masterPlaylistFile)
+    {
+        preg_match_all('/([a-zA-Z0-9_\-]+\.ts)/', $masterPlaylistFile, $matches);
+        return $matches[1] ?? [];
     }
 }
