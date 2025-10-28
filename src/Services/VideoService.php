@@ -238,13 +238,14 @@ class VideoService
 
         $content = Storage::disk(config('hls-videos.stream_disk'))->get($path);
         $oldTsFilesUrl = route(config('hls-videos.access_route_stream'), [$video->id, $firstQ->quality]);
-        $newTsFilesUrl = $localPath;
+        $newTsFilesUrl = "$localPath/$video->id";
         $content = str_replace($oldTsFilesUrl, $newTsFilesUrl, $content);
         $tsFiles = self::getTsFilesFromPlaylistFile($content);
         $tsFilesUrls = [];
 
         foreach ($tsFiles as $file) {
             $tsFilesUrls[] = [
+                'folder_name' => $video->id,
                 'file_name' => $file,
                 "donwload_url" => route(config('hls-videos.download_route_ts_files'), [
                     $video->id, $firstQ->quality, $file
