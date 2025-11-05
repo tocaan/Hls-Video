@@ -218,17 +218,32 @@ class VideoService
         else
             $path .= "/index.m3u8";
 
-        if (! Storage::disk(config('hls-videos.stream_disk'))->exists($path)) {
-            return false;
+        $disk = Storage::disk(config('hls-videos.stream_disk'));
+
+        $content = $disk->get($path);
+
+        // Determine content type based on file extension
+        $contentType = 'application/vnd.apple.mpegurl'; // default for .m3u8
+        if ($file) {
+            if (str_ends_with($file, '.ts')) {
+                $contentType = 'video/mp2t';
+            } elseif (str_ends_with($file, '.m3u8')) {
+                $contentType = 'application/vnd.apple.mpegurl';
+            }
         }
 
-        // Optional: auth check
-        // if (auth()->user()->cannot('view-video', $id)) abort(403);
+        if ($file == 'vd.m3u8') {
+            $oldTsFilesUrl = route(config('hls-videos.access_route_stream'), [$videoId, $quality]);
+            $newTsFilesUrl = config('hls-videos.stream_disk_url')."/$videoId/{$quality}";
+            $content = str_replace($oldTsFilesUrl, $newTsFilesUrl, $content);
+        }
 
-        return Storage::disk(config('hls-videos.stream_disk'))->temporaryUrl(
-            $path,
-            now()->addMinutes(5) // signed URL valid for 15 minutes
-        );
+        return response($content, 200, [
+            'Content-Type' => $contentType,
+            'Cache-Control' => 'no-cache, no-store, must-revalidate',
+            'Pragma' => 'no-cache',
+            'Expires' => '0',
+        ]);
     }
 
     static function downloadVideoLocale($localPath, $video)

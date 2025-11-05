@@ -10,6 +10,7 @@ return [
     'temp_disk' => env("HLS_VIDEO_TEMP_DISK",'temp_video'),
     'thumb_disk' => env("HLS_VIDEO_THUMB_DISK",'thumbnails'),
     'stream_disk' => env("HLS_VIDEO_STREAM_DISK",'r2'),
+    'stream_disk_url' => env("HLS_VIDEO_STREAM_DISK_URL"),
     'storages' => [
         'r2' => [
             'disk_name' => 'r2',
