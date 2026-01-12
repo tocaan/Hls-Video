@@ -258,13 +258,13 @@ class VideoService
         $tsFiles = self::getTsFilesFromPlaylistFile($content);
         $tsFilesUrls = [];
 
+
         foreach ($tsFiles as $file) {
+            $donwloadUrl = config('hls-videos.stream_disk_url')."/$video->id/{$firstQ->quality}/$file";
             $tsFilesUrls[] = [
                 'folder_name' => $video->id,
                 'file_name' => $file,
-                "donwload_url" => route(config('hls-videos.download_route_ts_files'), [
-                    $video->id, $firstQ->quality, $file
-                ])
+                "donwload_url" => $donwloadUrl
             ];
         }
 
