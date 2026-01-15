@@ -286,6 +286,7 @@ class VideoService
         $oldTsFilesUrl = route(config('hls-videos.access_route_stream'), [$video->id, $firstQ->quality]);
         $newTsFilesUrl = "$localPath/$video->id";
         $content = str_replace($oldTsFilesUrl, $newTsFilesUrl, $content);
+        $tsFilesCount = count(self::getTsFilesFromPlaylistFile($content));
 
         return [
             "playlist" => [
@@ -295,6 +296,7 @@ class VideoService
             "ts_files" => [
                 'folder_name' => $video->id,
                 'file_name' => 'vd.zip',
+                'ts_files_count' => $tsFilesCount,
                 "donwload_url" => config('hls-videos.stream_disk_url')."/$video->id/vd.zip"
             ]
         ];
