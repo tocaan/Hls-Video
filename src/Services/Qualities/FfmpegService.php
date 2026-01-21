@@ -39,7 +39,7 @@ class FfmpegService implements VideoQualityProcessorInterface
         FFMpeg::fromDisk(config('hls-videos.temp_disk'))
             ->open($this->video->temp_video_path)
             ->exportForHLS()
-            ->setSegmentLength(4) // seconds
+            ->setSegmentLength(config('hls-videos.segment_length',4)) // seconds
             ->setKeyFrameInterval(48) // for better seeking performance
             ->addFormat($format, function ($media) use ($width, $height) {
                 $media->scale($width, $height);
