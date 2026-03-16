@@ -221,6 +221,7 @@ class VideoService
         $disk = Storage::disk(config('hls-videos.stream_disk'));
 
         $content = $disk->get($path);
+        $content = str_replace('http://', 'https://', $content);
 
         // Determine content type based on file extension
         $contentType = 'application/vnd.apple.mpegurl'; // default for .m3u8

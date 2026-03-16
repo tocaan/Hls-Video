@@ -20,7 +20,11 @@ class FfmpegService implements VideoQualityProcessorInterface
 
         $this->video = $quality->video;
         $this->quality = $quality;
-        [$width, $height, $videoKbps] = $this->getQualitySettings($this->quality->quality);
+
+        // Get the actual video dimensions first
+        [$actualWidth, $actualHeight] = $this->getActualVideoDimensions();
+
+        [$width, $height, $videoKbps] = $this->getQualitySettings($this->quality->quality, $actualWidth, $actualHeight);
         $bandwidth = $videoKbps * 1024;
 
         // By default, empty the target quality folder (remove all files but keep the folder)
@@ -39,7 +43,7 @@ class FfmpegService implements VideoQualityProcessorInterface
         FFMpeg::fromDisk(config('hls-videos.temp_disk'))
             ->open($this->video->temp_video_path)
             ->exportForHLS()
-            ->setSegmentLength(config('hls-videos.segment_length',4)) // seconds
+            ->setSegmentLength(4) // seconds
             ->setKeyFrameInterval(48) // for better seeking performance
             ->addFormat($format, function ($media) use ($width, $height) {
                 $media->scale($width, $height);
@@ -61,15 +65,57 @@ class FfmpegService implements VideoQualityProcessorInterface
     }
 
 
-    protected function getQualitySettings($quality)
+    protected function getActualVideoDimensions(): array
     {
-        // Width, Height, Video Bitrate in Kbps
-        return match ($quality) {
+        $ffprobe = \FFMpeg\FFProbe::create();
+        $streams = $ffprobe
+            ->streams(\Storage::disk(config('hls-videos.temp_disk'))->path($this->video->temp_video_path))
+            ->videos();
+
+        $videoStream = $streams->first();
+
+        return [
+            $videoStream->get('width'),
+            $videoStream->get('height'),
+        ];
+    }
+
+    protected function getQualitySettings($quality, int $actualWidth = null, int $actualHeight = null): array
+    {
+        // All available quality presets: [width, height, kbps]
+        $presets = [
             '1080' => [1920, 1080, 3000],
             '720' => [1280, 720, 1500],
             '480' => [854, 480, 500],
             '360' => [640, 360, 400],
-            default => [1280, 720, 1000],
-        };
+        ];
+
+        $requested = $presets[$quality] ?? [1280, 720, 1000];
+
+        // If we don't know the actual dimensions, just return as-is
+        if ($actualWidth === null || $actualHeight === null) {
+            return $requested;
+        }
+
+        [$reqWidth, $reqHeight, $reqKbps] = $requested;
+
+        // If the video is already smaller than or equal to the requested size, find the best fitting preset
+        if ($actualHeight <= $reqHeight) {
+            // Walk presets from lowest to highest and pick the highest one that fits
+            $sorted = collect($presets)->sortBy(fn ($p) => $p[1]); // sort by height asc
+
+            $best = $sorted->first(); // fallback: lowest quality
+
+            foreach ($sorted as $preset) {
+                if ($preset[1] <= $actualHeight) {
+                    $best = $preset;
+                }
+            }
+
+            return $best;
+        }
+
+        // Video is larger than or equal to the requested quality — use it as-is
+        return $requested;
     }
 }
