@@ -38,13 +38,19 @@ class FfmpegService implements VideoQualityProcessorInterface
         }
 
         // Create format
-        $format = (new X264)->setKiloBitrate($videoKbps);
+        $format = (new X264)->setKiloBitrate($videoKbps)
+            ->setAdditionalParameters([
+                '-preset', 'slow',       // better compression (default is 'medium' or 'veryfast')
+                '-crf', '23',            // quality-based fallback
+                '-profile:v', 'main',
+                '-level', '3.1',
+            ]);
 
         FFMpeg::fromDisk(config('hls-videos.temp_disk'))
             ->open($this->video->temp_video_path)
             ->exportForHLS()
-            ->setSegmentLength(4) // seconds
-            ->setKeyFrameInterval(48) // for better seeking performance
+            ->setSegmentLength(6) // seconds
+            ->setKeyFrameInterval(150) // for better seeking performance
             ->addFormat($format, function ($media) use ($width, $height) {
                 $media->scale($width, $height);
             })
@@ -85,7 +91,7 @@ class FfmpegService implements VideoQualityProcessorInterface
         // All available quality presets: [width, height, kbps]
         $presets = [
             '1080' => [1920, 1080, 3000],
-            '720' => [1280, 720, 1500],
+            '720' => [1280, 720, 1000],
             '480' => [854, 480, 500],
             '360' => [640, 360, 400],
         ];
