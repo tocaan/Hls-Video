@@ -7,6 +7,7 @@ use FFMpeg;
 use Pion\Laravel\ChunkUpload\Handler\HandlerFactory;
 use Pion\Laravel\ChunkUpload\Receiver\FileReceiver;
 use Illuminate\Support\Facades\Storage;
+use HlsVideos\Models\HlsVideoQuality;
 
 
 class VideoService
