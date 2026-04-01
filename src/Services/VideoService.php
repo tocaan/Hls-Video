@@ -221,6 +221,20 @@ class VideoService
         $disk = Storage::disk(config('hls-videos.stream_disk'));
 
         $content = $disk->get($path);
+        if (! $content) {
+            $quality = $video->qualities()->where('status', HlsVideoQuality::READY)->oldest()->first();
+
+            if (! $quality) {
+                return response()->json('not found', 404);
+            }
+            if (isset($quality->convert_data['original']) && $quality->convert_data['original']) {
+                $path = "{$video->id}/{$quality->quality}/{$video->file_name}";
+                return redirect()->away(config('hls-videos.stream_disk_url')."/$path");
+            } else {
+                $path = $video->id;
+                $path .= "/{$quality->quality}/vd.m3u8";
+            }
+        }
         $content = str_replace('http://', 'https://', $content);
 
         // Determine content type based on file extension
@@ -238,7 +252,6 @@ class VideoService
             $newTsFilesUrl = config('hls-videos.stream_disk_url')."/$videoId/{$quality}";
             $content = str_replace($oldTsFilesUrl, $newTsFilesUrl, $content);
         }
-
         return response($content, 200, [
             'Content-Type' => $contentType,
             'Cache-Control' => 'no-cache, no-store, must-revalidate',

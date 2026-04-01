@@ -415,18 +415,82 @@
             });
         }
 
-        function videoPlayerIoRun(source) {
-            let video = document.getElementById('player');
+        let __plyr = null;
+        let __hls = null;
 
-            if (Hls.isSupported()) {
-                const hls = new Hls();
-                hls.loadSource(source);
-                hls.attachMedia(video);
-            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-                video.src = source;
+        async function resolveRedirectUrl(url) {
+            // Try HEAD first to avoid downloading large files (e.g. mp4).
+            try {
+                const headRes = await fetch(url, {
+                    method: 'HEAD',
+                    redirect: 'follow',
+                    credentials: 'same-origin'
+                });
+                if (headRes && headRes.url) return headRes.url;
+            } catch (e) {}
+
+            // Fallback: a tiny ranged GET (some hosts block HEAD).
+            try {
+                const getRes = await fetch(url, {
+                    method: 'GET',
+                    redirect: 'follow',
+                    credentials: 'same-origin',
+                    headers: {
+                        'Range': 'bytes=0-0'
+                    }
+                });
+                if (getRes && getRes.url) return getRes.url;
+            } catch (e) {}
+
+            return url;
+        }
+
+        function isLikelyHls(url) {
+            try {
+                const u = new URL(url, window.location.href);
+                return u.pathname.toLowerCase().endsWith('.m3u8');
+            } catch (e) {
+                return String(url).toLowerCase().includes('.m3u8');
+            }
+        }
+
+        async function videoPlayerIoRun(source) {
+            const video = document.getElementById('player');
+            if (!video) return;
+
+            if (__plyr) {
+                try {
+                    __plyr.destroy();
+                } catch (e) {}
+                __plyr = null;
+            }
+            if (__hls) {
+                try {
+                    __hls.destroy();
+                } catch (e) {}
+                __hls = null;
             }
 
-            const player = new Plyr(video);
+            const finalUrl = await resolveRedirectUrl(source);
+
+            // If it's not an HLS playlist (e.g. original mp4 redirect), let the native <video> load it.
+            if (!isLikelyHls(finalUrl)) {
+                video.src = finalUrl;
+                __plyr = new Plyr(video);
+                return;
+            }
+
+            if (Hls.isSupported()) {
+                __hls = new Hls();
+                __hls.loadSource(finalUrl);
+                __hls.attachMedia(video);
+            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                video.src = finalUrl;
+            } else {
+                video.src = finalUrl;
+            }
+
+            __plyr = new Plyr(video);
         }
         $(document).ready(function() {
             refreshVideoViewContent();
