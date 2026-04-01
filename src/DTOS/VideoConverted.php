@@ -1,10 +1,10 @@
 <?php
 
-namespace  HlsVideos\DTOS;
+namespace HlsVideos\DTOS;
 
 use HlsVideos\Events\VideoConvertedEvent;
-use  HlsVideos\Models\HlsVideo;
-use  HlsVideos\Models\HlsVideoQuality;
+use HlsVideos\Models\HlsVideo;
+use HlsVideos\Models\HlsVideoQuality;
 use HlsVideos\Services\CompressService;
 use HlsVideos\Services\VideoService;
 use Illuminate\Support\Facades\Storage;
@@ -14,12 +14,18 @@ class VideoConverted
 {
    public $video;
 
-   public function __construct(public HlsVideoQuality $videoQuality) {
+   public function __construct(public HlsVideoQuality $videoQuality)
+   {
 
       $this->video = $this->videoQuality->video;
 
-      $this->handlingTheQualityPlaylist();
-      $this->createOrUpdateMasterPlaylist();
+
+      if (isset($this->videoQuality->convert_data['original']) && $this->videoQuality->convert_data['original'] == true) {
+
+      } else {
+         $this->handlingTheQualityPlaylist();
+         $this->createOrUpdateMasterPlaylist();
+      }
 
       $this->videoQuality->updateStatusTo(HlsVideoQuality::UPLOADING);
       $this->uploadVideoToStorage();
@@ -30,7 +36,7 @@ class VideoConverted
 
    private function uploadVideoToStorage()
    {
-      foreach(config('hls-videos.storages') as $key => $storage){
+      foreach (config('hls-videos.storages') as $key => $storage) {
          $service = new $storage['service'];
          $service->uploadVideo($this->videoQuality, $storage);
       }
@@ -41,17 +47,20 @@ class VideoConverted
       $this->video->update(['status' => HlsVideo::READY]);
       $upcommingQuality = VideoService::getUpcommingQuality($this->video);
 
-      if($upcommingQuality){
+      if ($upcommingQuality) {
 
-         VideoService::createQualityFromConfig($this->video,$upcommingQuality);
-      }else{
+         VideoService::createQualityFromConfig($this->video, $upcommingQuality);
+      } else {
 
-         if(!$this->video->qualities()->notReady()->count()){
+         if (! $this->video->qualities()->notReady()->count()) {
 
-            CompressService::compressAndUploadVideo($this->video);
+            if (config('hls-videos.support_compress', true)) {
+
+               CompressService::compressAndUploadVideo($this->video);
+            }
             Storage::disk(config('hls-videos.temp_disk'))->deleteDirectory($this->video->id);
             Event::dispatch(new VideoConvertedEvent($this->video));
-          }
+         }
       }
    }
 
@@ -70,16 +79,16 @@ class VideoConverted
          $newContent = preg_replace_callback(
             '/^([^\r\n]*?)([a-zA-Z0-9_\-]+\.ts)$/m',
             function ($matches) {
-                  $fileName = $matches[2];
-                  $fileName = explode('/',$fileName);
-                  $fileName = $fileName[count($fileName) - 1];
-                  // If you have access to the route() helper, use it. Otherwise, build the URL manually:
-                  $url = route(config('hls-videos.access_route_stream'), [
-                  $this->videoQuality->hls_video_id, 
-                  $this->videoQuality->quality, 
+               $fileName = $matches[2];
+               $fileName = explode('/', $fileName);
+               $fileName = $fileName[count($fileName) - 1];
+               // If you have access to the route() helper, use it. Otherwise, build the URL manually:
+               $url = route(config('hls-videos.access_route_stream'), [
+                  $this->videoQuality->hls_video_id,
+                  $this->videoQuality->quality,
                   $fileName
                ]);
-                  return $matches[1] . $url;
+               return $matches[1].$url;
             },
             $content
          );
@@ -87,10 +96,10 @@ class VideoConverted
          // Write the modified content back to the file (overwrite)
          file_put_contents($playlistIndexFile, $newContent);
 
-       } catch (\Exception $e) {
+      } catch (\Exception $e) {
          \Log::error("FAILED ConvertQualityJob: {$e->getMessage()}");
          throw $e;
-       }
+      }
    }
 
 
@@ -103,13 +112,13 @@ class VideoConverted
     */
    private function createOrUpdateMasterPlaylist()
    {
-       try {
+      try {
          $masterPlaylist = "#EXTM3U\n";
          $masterPlaylist .= "#EXT-X-VERSION:3\n";
 
          foreach ($this->video->qualities as $quality) {
             $qualityIndexPlaylistPath = "{$this->videoQuality->hls_video_id}/{$this->videoQuality->quality}/index.m3u8";
-            if(Storage::disk(config('hls-videos.temp_disk'))->exists($qualityIndexPlaylistPath)){
+            if (Storage::disk(config('hls-videos.temp_disk'))->exists($qualityIndexPlaylistPath)) {
                $fileContents = Storage::disk(config('hls-videos.temp_disk'))->get($qualityIndexPlaylistPath);
                // Extract the first #EXT-X-STREAM-INF line if available
                $lines = explode("\n", $fileContents);
@@ -121,7 +130,7 @@ class VideoConverted
                   }
                }
                $masterPlaylist .= "$streamInfLine\n";
-            }else{
+            } else {
 
                $convertData = $quality->convert_data;
                // Set defaults if not provided
@@ -136,12 +145,12 @@ class VideoConverted
             $masterPlaylist .= "$pathToFile\n";
          }
 
-         $masterPath = $this->video->temp_video_folder . '/index.m3u8';
+         $masterPath = $this->video->temp_video_folder.'/index.m3u8';
          file_put_contents($masterPath, $masterPlaylist);
 
-       } catch (\Exception $e) {
+      } catch (\Exception $e) {
          \Log::error("FAILED ConvertQualityJob: {$e->getMessage()}");
          throw $e;
-       }
+      }
    }
 }
