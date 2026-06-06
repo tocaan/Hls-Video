@@ -252,10 +252,11 @@ class VideoService
             $oldTsFilesUrl = route(config('hls-videos.access_route_stream'), [$videoId, $quality]);
             $newTsFilesUrl = config('hls-videos.stream_disk_url')."/$videoId/{$quality}";
             $content = str_replace($oldTsFilesUrl, $newTsFilesUrl, $content);
-            if (config('hls-videos.ignored_domains') && is_array(config('hls-videos.ignored_domains')) && count(config('hls-videos.ignored_domains')) > 0) {
-                foreach (config('hls-videos.ignored_domains') as $domain) {
-                    $content = str_replace($domain, env('APP_URL'), $content);
-                }
+
+        }
+        if (config('hls-videos.ignored_domains') && is_array(config('hls-videos.ignored_domains')) && count(config('hls-videos.ignored_domains')) > 0) {
+            foreach (config('hls-videos.ignored_domains') as $domain) {
+                $content = str_replace($domain, env('APP_URL'), $content);
             }
         }
         return response($content, 200, [
