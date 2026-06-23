@@ -52,7 +52,6 @@ HLS_VIDEO_TEMP_DISK=temp_video
 HLS_VIDEO_THUMB_DISK=thumbnails
 HLS_VIDEO_STREAM_DISK=r2
 HLS_VIDEO_STREAM_DISK_URL=https://example.com/path-to-stream-storage
-HLS_VIDEO_MP4_TO_TOKEN=
 HLS_VIDEO_SEGMENT_LENGTH=4
 ```
 
