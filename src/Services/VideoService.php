@@ -307,7 +307,10 @@ class VideoService
         $oldTsFilesUrl = route(config('hls-videos.access_route_stream'), [$video->id, $firstQ->quality]);
         $newTsFilesUrl = "$localPath/$video->id";
         $content = str_replace($oldTsFilesUrl, $newTsFilesUrl, $content);
-        $tsFilesCount = count(self::getTsFilesFromPlaylistFile($content));
+        $qualityFolder = "$video->id/$firstQ->quality";
+        $tsFilesCount = collect(Storage::disk(config('hls-videos.stream_disk'))->files($qualityFolder))
+            ->filter(fn ($file) => str_ends_with($file, '.ts'))
+            ->count();
 
         return [
             "playlist" => [
