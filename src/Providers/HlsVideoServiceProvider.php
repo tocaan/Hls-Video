@@ -26,6 +26,12 @@ class HlsVideoServiceProvider extends ServiceProvider
         Blade::component('hls-video-manager', VideoManeger::class);
         Blade::component('hls-play', HlsPlayer::class);
         Blade::component('hls-play-js', HlsPlayerScript::class);
+
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                \HlsVideos\Console\Commands\CachePlaylistsCommand::class,
+            ]);
+        }
     }
 
     public function register()

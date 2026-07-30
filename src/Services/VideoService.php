@@ -270,9 +270,8 @@ class VideoService
     static function downloadVideoLocale($localPath, $video)
     {
         $firstQ = $video->qualities()->oldest()->first();
-        $path = "$video->id/$firstQ->quality/vd.m3u8";
-
-        $content = Storage::disk(config('hls-videos.stream_disk'))->get($path);
+        $firstQ->ensurePlaylistCache();
+        $content = $firstQ->playlist_content;
         $oldTsFilesUrl = route(config('hls-videos.access_route_stream'), [$video->id, $firstQ->quality]);
         $newTsFilesUrl = "$localPath/$video->id";
         $content = str_replace($oldTsFilesUrl, $newTsFilesUrl, $content);
@@ -301,16 +300,12 @@ class VideoService
     static function downloadCompressedVideoLocale($localPath, $video)
     {
         $firstQ = $video->qualities()->oldest()->first();
-        $path = "$video->id/$firstQ->quality/vd.m3u8";
-
-        $content = Storage::disk(config('hls-videos.stream_disk'))->get($path);
+        $firstQ->ensurePlaylistCache();
+        $content = $firstQ->playlist_content;
         $oldTsFilesUrl = route(config('hls-videos.access_route_stream'), [$video->id, $firstQ->quality]);
         $newTsFilesUrl = "$localPath/$video->id";
         $content = str_replace($oldTsFilesUrl, $newTsFilesUrl, $content);
-        $qualityFolder = "$video->id/$firstQ->quality";
-        $tsFilesCount = collect(Storage::disk(config('hls-videos.stream_disk'))->files($qualityFolder))
-            ->filter(fn ($file) => str_ends_with($file, '.ts'))
-            ->count();
+        $tsFilesCount = $firstQ->ts_files_count;
 
         return [
             "playlist" => [
