@@ -17,10 +17,23 @@ class ConvertQualityJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public $timeout = 0; // infinite timeout
+    /**
+     * Wall-clock ceiling for a single conversion, in seconds.
+     *
+     * A transcode legitimately runs for minutes, so this has to be generous,
+     * but it must not be infinite: a wedged ffmpeg process would otherwise
+     * hold its worker for the lifetime of the queue. Set
+     * `hls-videos.job_timeout` to 0 to opt back into no limit.
+     *
+     * Whichever queue connection carries this job must have a `retry_after`
+     * larger than this value, or Redis will hand a still-running transcode to
+     * a second worker and the two runs will overwrite each other's segments.
+     */
+    public $timeout;
 
     public function __construct(protected HlsVideoQuality $hlsVideoQuality)
     {
+        $this->timeout = (int) config('hls-videos.job_timeout', 7200);
     }
 
     public function handle()

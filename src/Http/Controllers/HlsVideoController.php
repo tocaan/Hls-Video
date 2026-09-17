@@ -19,8 +19,10 @@ class HlsVideoController extends Controller
     {
         try {
             $model = null;
-            if($request->model_type && $request->model_id)
-                $model = $request->model_type::find($request->model_id);
+            $modelClass = $request->videoableModelClass();
+
+            if($modelClass && $request->model_id)
+                $model = $modelClass::find($request->model_id);
 
             $receiver = $this->videoService->receiveVideo($request,$model);
 

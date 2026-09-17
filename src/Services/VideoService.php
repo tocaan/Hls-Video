@@ -256,7 +256,7 @@ class VideoService
         }
         if (config('hls-videos.ignored_domains') && is_array(config('hls-videos.ignored_domains')) && count(config('hls-videos.ignored_domains')) > 0) {
             foreach (config('hls-videos.ignored_domains') as $domain) {
-                $content = str_replace($domain, env('APP_URL'), $content);
+                $content = str_replace($domain, config('app.url'), $content);
             }
         }
         return response($content, 200, [

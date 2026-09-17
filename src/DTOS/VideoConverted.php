@@ -42,9 +42,13 @@ class VideoConverted
       }
    }
 
+   /**
+    * The video only becomes `ready` once every configured tier has been
+    * converted — not after the first one. Marking it ready early would let a
+    * player request a quality whose playlist does not exist yet.
+    */
    private function updateVideoUploaded()
    {
-      $this->video->update(['status' => HlsVideo::READY]);
       $upcommingQuality = VideoService::getUpcommingQuality($this->video);
 
       if ($upcommingQuality) {
@@ -54,7 +58,9 @@ class VideoConverted
 
          if (! $this->video->qualities()->notReady()->count()) {
 
-            if (config('hls-videos.support_compress', true)) {
+            $this->video->update(['status' => HlsVideo::READY]);
+
+            if (config('hls-videos.support_compress', false)) {
 
                CompressService::compressAndUploadVideo($this->video);
             }

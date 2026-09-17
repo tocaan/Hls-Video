@@ -55,7 +55,82 @@ HLS_VIDEO_STREAM_DISK_URL=https://example.com/path-to-stream-storage
 HLS_VIDEO_SEGMENT_LENGTH=4
 ```
 
-Make sure these disks exist in your Laravel `config/filesystems.php`.
+Make sure these disks exist in your Laravel `config/filesystems.php`. `temp_disk`
+must use the `local` driver — conversion calls `->path()` and `mkdir()` on it,
+which throw on S3-compatible adapters.
+
+`stream_disk_url` is the public base URL of `stream_disk`. It is substituted
+into playlists when they are served, so players fetch `.ts` segments straight
+from storage. Leave it unset and every segment is proxied through PHP instead.
+
+### Conversion Queue
+
+`ConvertQualityJob` is dispatched onto `queue_connection` / `queue`. Give it a
+connection of its own — a single transcode occupies a worker for minutes, and
+on a shared queue it blocks mail and notifications behind it.
+
+```env
+HLS_VIDEO_QUEUE_CONNECTION=redis-video
+HLS_VIDEO_QUEUE=video
+HLS_VIDEO_JOB_TIMEOUT=7200
+```
+
+**That connection's `retry_after` must exceed both the longest expected
+conversion and `job_timeout`.** Redis releases a job's reservation once
+`retry_after` elapses and hands it to a second worker, and the conversion
+service empties its output folder when it starts, so two concurrent runs
+overwrite each other's segments.
+
+Conversion reads the source video as a local absolute path, so the queue worker
+must share a filesystem with whatever received the upload.
+
+### Quality Tiers
+
+Each `qualities` array key must equal its own `quality` value — the processor
+factory looks entries up by quality name. Tiers convert one at a time, in
+order, each in its own job, and the video is not marked `ready` until the last
+one finishes.
+
+`FfmpegService` understands the names `1080`, `720`, `480` and `360`. Any other
+name must carry explicit `width`, `height` and `kbps`, or conversion throws:
+
+```php
+'qualities' => [
+    'hd' => [
+        'quality' => 'hd',
+        'convert_service' => FfmpegService::class,
+        'width' => 1600, 'height' => 900, 'kbps' => 2000,
+    ],
+],
+```
+
+`FfmpegService` runs on your own server. The alternative, `Mp4ToService`,
+uploads the source video to the third-party mp4.to service and needs
+`HLS_VIDEO_MP4_TO_TOKEN`.
+
+Binary paths come from `pbmedia/laravel-ffmpeg`'s own `config/laravel-ffmpeg.php`
+(`FFMPEG_BINARIES` / `FFPROBE_BINARIES`). Set them explicitly — a queue
+worker's `PATH` rarely matches an interactive shell's.
+
+### Attachable Models
+
+`videoable_models` is an allowlist of models a video may be attached to, as
+`alias => class`. The upload endpoint validates `model_type` against it, so
+until you populate it no model can be attached:
+
+```php
+'videoable_models' => [
+    'lesson' => \App\Models\Lesson::class,
+],
+```
+
+### Optional Steps
+
+| Key | Default | Effect |
+| --- | --- | --- |
+| `take_thumbnail` | `false` | Grabs a frame at 3s onto `thumb_disk`. |
+| `support_compress` | `false` | Writes an extra `vd.zip` of every segment for offline download, roughly doubling storage per video. |
+| `ignored_domains` | `[]` | Rewritten to `app.url` when serving a playlist, for apps that changed domain after converting. |
 
 ## Layout Stacks
 
@@ -155,10 +230,30 @@ class VideoController extends Controller
 
 ## Package Routes
 
-The package automatically registers upload and video option routes under:
+The package registers the bundled uploader's endpoints under the `hls/videos`
+prefix, protected by `uploader_access_middleware`. They are loaded with
+`loadRoutesFrom()` and get no middleware group of their own, so `web` has to be
+in that list for the session and CSRF token the uploader sends.
 
-```text
-hls/videos
+| Route name | Method | Path |
+| --- | --- | --- |
+| `hls.videos.list` | GET | `hls/videos/list` |
+| `hls.videos.upload` | ANY | `hls/videos/upload` |
+| `hls.videos.options` | GET | `hls/videos/video-options/{videoId?}` |
+| `hls.videos.delete` | DELETE | `hls/videos/video-delete/{videoId}` |
+
+`hls.videos.upload` accepts a chunked `file` (via `pion/laravel-chunk-upload`)
+plus an optional `model_type` / `model_id` pair, where `model_type` is an alias
+or class-string from `videoable_models`. It returns the same JSON shape as
+`hls.videos.options`: `html`, `build_uploader`, `is_ready`, `video_source`,
+`video_id`.
+
+The bundled Blade uploader needs jQuery, bootbox, toastr and CDN copies of Uppy
+and Plyr, which do not exist in a Filament or Livewire admin panel. If you are
+building your own uploader, either target those four endpoints or skip them
+entirely — set `register_routes` to false and call `VideoService` directly:
+
+```php
+app(\HlsVideos\Services\VideoService::class)
+    ->handlingUploadedFile($uploadedFile, $lesson, deleteChunked: false);
 ```
-
-These routes are protected by the `uploader_access_middleware` value in `config/hls-videos.php`.

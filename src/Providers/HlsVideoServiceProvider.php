@@ -17,7 +17,13 @@ class HlsVideoServiceProvider extends ServiceProvider
         $this->loadViewsFrom(__DIR__.'/../resources/views', 'hls-videos');
 
         // Routes
-        $this->loadRoutesFrom(__DIR__.'/../Routes/web.php');
+        //
+        // These are the bundled uploader's endpoints. Apps that drive uploads
+        // through their own admin panel should set `register_routes` to false
+        // so the `hls/videos` prefix never exists at all.
+        if (config('hls-videos.register_routes', true)) {
+            $this->loadRoutesFrom(__DIR__.'/../Routes/web.php');
+        }
 
         // Migrations
         $this->loadMigrationsFrom(__DIR__.'/../Database/migrations');

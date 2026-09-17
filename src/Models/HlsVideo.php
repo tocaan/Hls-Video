@@ -6,6 +6,21 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
 use  HlsVideos\Services\VideoService;
 
+/**
+ * @property string $id UUID; also the folder name on both the temp and stream disks.
+ * @property string $status One of UPLOADED, PROCESSING, READY.
+ * @property string|null $file_name
+ * @property string|null $original_extension
+ * @property string|null $original_file_name
+ * @property array|null $stream_data
+ * @property-read string $video_link
+ * @property-read string $thumb_url
+ * @property-read bool $is_ready
+ * @property-read string|null $temp_video Absolute local path, or null once cleaned up.
+ * @property-read string|null $temp_video_folder
+ * @property-read string $temp_video_path
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, HlsVideoQuality> $qualities
+ */
 class HlsVideo extends Model
 {
 
@@ -13,7 +28,7 @@ class HlsVideo extends Model
     const PROCESSING = 'processing';
     const READY = 'ready';
     protected $guarded = [];
-    public $casts = ['stream_data' => 'array'];
+    protected $casts = ['stream_data' => 'array'];
     public $incrementing = false;
     protected $keyType = 'string';
 
@@ -39,23 +54,12 @@ class HlsVideo extends Model
         return $this->hasMany(HlsVideoQuality::class,'hls_video_id');
     }
 
-    // This relation is likely incorrect.
-    // If you want to get all models (of any type) that are related to this HlsVideo,
-    // you should use morphToMany, not morphByMany, and the related model should not be HlsVideo itself.
-    // Typically, the inverse of a morphToMany is a morphedByMany.
-    // For example, if HlsVideo is related to other models via 'videoable', you might want:
-
-    public function videoables()
-    {
-        return $this->morphedByMany(
-            config('hls-videos.videoable_models', []), // or specify the model(s) you expect, e.g. User::class, Post::class, etc.
-            'videoable',
-            'hls_videoables',
-            'hls_video_id',
-            'videoable_id'
-        );
-    }
-
+    /**
+     * There is deliberately no inverse of HasHlsVideo::hlsVideos() here.
+     * morphedByMany() takes one class-string, so a single relation cannot
+     * span every videoable type; query `hls_videoables` from the owning side
+     * instead.
+     */
     public function scopeReady($query){
         return $query->where('status', self::READY);
     }
