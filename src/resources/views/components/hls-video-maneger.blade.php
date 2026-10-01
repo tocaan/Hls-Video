@@ -418,7 +418,9 @@
         let __plyr = null;
         let __hls = null;
 
-        async function resolveRedirectUrl(url) {
+        // Resolves redirects and returns the final URL plus its Content-Type,
+        // so we can detect HLS playlists served from routes without a .m3u8 extension.
+        async function resolveSource(url) {
             // Try HEAD first to avoid downloading large files (e.g. mp4).
             try {
                 const headRes = await fetch(url, {
@@ -426,7 +428,12 @@
                     redirect: 'follow',
                     credentials: 'same-origin'
                 });
-                if (headRes && headRes.url) return headRes.url;
+                if (headRes && headRes.ok) {
+                    return {
+                        url: headRes.url || url,
+                        contentType: headRes.headers.get('content-type') || ''
+                    };
+                }
             } catch (e) {}
 
             // Fallback: a tiny ranged GET (some hosts block HEAD).
@@ -439,13 +446,23 @@
                         'Range': 'bytes=0-0'
                     }
                 });
-                if (getRes && getRes.url) return getRes.url;
+                if (getRes) {
+                    return {
+                        url: getRes.url || url,
+                        contentType: getRes.headers.get('content-type') || ''
+                    };
+                }
             } catch (e) {}
 
-            return url;
+            return {
+                url: url,
+                contentType: ''
+            };
         }
 
-        function isLikelyHls(url) {
+        function isLikelyHls(url, contentType) {
+            if (contentType && contentType.toLowerCase().includes('mpegurl')) return true;
+
             try {
                 const u = new URL(url, window.location.href);
                 return u.pathname.toLowerCase().endsWith('.m3u8');
@@ -471,10 +488,11 @@
                 __hls = null;
             }
 
-            const finalUrl = await resolveRedirectUrl(source);
+            const resolved = await resolveSource(source);
+            const finalUrl = resolved.url;
 
             // If it's not an HLS playlist (e.g. original mp4 redirect), let the native <video> load it.
-            if (!isLikelyHls(finalUrl)) {
+            if (!isLikelyHls(finalUrl, resolved.contentType)) {
                 video.src = finalUrl;
                 __plyr = new Plyr(video);
                 return;
