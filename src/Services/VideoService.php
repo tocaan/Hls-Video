@@ -234,6 +234,7 @@ class VideoService
             } else {
                 $path = $video->id;
                 $path .= "/{$quality->quality}/vd.m3u8";
+                $content = $disk->get($path);
             }
         }
         $content = str_replace('http://', 'https://', $content);
